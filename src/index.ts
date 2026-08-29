@@ -10,7 +10,6 @@ import { HttpError } from './shared/http-error';
 import { authRoutes } from './modules/auth/auth-router';
 import type { FastifyError } from 'fastify';
 
-
 const app = Fastify({ logger: true });
 
 app.setValidatorCompiler(validatorCompiler);
@@ -53,7 +52,7 @@ async function main() {
 
     return reply.status(statusCode).send({
         statusCode,
-        error: statusCode === 500 ? 'Internal Server Error' : (error.name || 'Error'),
+        error: statusCode === 500 ? 'INTERNAL_SERVER_ERROR' : (error.name || 'Error'),
         message: statusCode === 500 ? 'Unexpected error.' : error.message,
     });
     });

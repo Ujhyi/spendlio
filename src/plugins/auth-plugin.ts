@@ -11,8 +11,8 @@ declare module 'fastify' {
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { userId: string; email: string };
-    user: { userId: string; email: string };
+    payload: { userId: number; email: string };
+    user: { userId: number; email: string };
   }
 }
 
@@ -25,7 +25,7 @@ export default fp(async function authPlugin(app: FastifyInstance) {
     try {
       await request.jwtVerify();
     } catch {
-      throw unauthorized('Neplatný alebo chýbajúci token.');
+      throw unauthorized('Incorrect or invalid token.');
     }
   });
 });
