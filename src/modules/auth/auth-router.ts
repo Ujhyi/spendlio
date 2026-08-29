@@ -3,9 +3,10 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
   registerBodySchema, registerResponseSchema,
   loginBodySchema, loginResponseSchema, 
-  changePasswordBodySchema, changePasswordResponseSchema
+  changePasswordBodySchema, changePasswordResponseSchema,
+  disableAccountResponseSchema, 
 } from './auth-schema';
-import { registerUser, validateLogin, changePassword } from './auth-service';
+import { registerUser, validateLogin, changePassword, disableAccount } from './auth-service';
 
 export async function authRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
@@ -48,5 +49,15 @@ export async function authRoutes(app: FastifyInstance) {
     return changePassword(request.user.userId, oldPassword, newPassword);
   });
 
+  server.post('/auth/disable-account', {
+    onRequest: [app.authenticate],
+    schema: {
+      tags: ['auth'],
+      security: [{ bearerAuth: [] }],
+      response: { 200: disableAccountResponseSchema },
+    },
+  }, async (request) => {
+    return disableAccount(request.user.userId);
+  });
   
 }

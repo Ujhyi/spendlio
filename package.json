@@ -35,11 +35,13 @@
     "fastify": "^5.12.1",
     "fastify-plugin": "^6.0.0",
     "fastify-type-provider-zod": "^7.0.0",
+    "node-cron": "^4.6.0",
     "postgres": "^3.4.9",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
+    "@types/node-cron": "^3.0.11",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
