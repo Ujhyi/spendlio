@@ -8,5 +8,5 @@ dist/
 .env
 
 # Drizzle migration
-# drizzle/
+drizzle/meta/
 
