@@ -6,7 +6,8 @@ export const registerBodySchema = z.object({
 });
 
 export const registerResponseSchema = z.object({
-  id: z.string(),
+  id: z.number(),
+  clientId: z.number(),
   email: z.string(),
 });
 
