@@ -10,7 +10,6 @@ import { HttpError } from './shared/http-error';
 import { authRoutes } from './modules/auth/auth-router';
 import type { FastifyError } from 'fastify';
 
-
 const app = Fastify({ logger: true });
 
 app.setValidatorCompiler(validatorCompiler);

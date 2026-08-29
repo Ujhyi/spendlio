@@ -2,9 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
   registerBodySchema, registerResponseSchema,
-  loginBodySchema, loginResponseSchema,
+  loginBodySchema, loginResponseSchema, 
+  changePasswordBodySchema, changePasswordResponseSchema
 } from './auth-schema';
-import { registerUser, validateLogin } from './auth-service';
+import { registerUser, validateLogin, changePassword } from './auth-service';
 
 export async function authRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
@@ -33,4 +34,19 @@ export async function authRoutes(app: FastifyInstance) {
     const token = app.jwt.sign({ userId: user.id, email: user.email }, { expiresIn: '7d' });
     return { token };
   });
+
+  server.post('/auth/change-password', {
+    onRequest: [app.authenticate],
+    schema: {
+      tags: ['auth'],
+      security: [{ bearerAuth: [] }],
+      body: changePasswordBodySchema,
+      response: { 200: changePasswordResponseSchema },
+    },
+  }, async (request) => {
+    const { oldPassword, newPassword } = request.body;
+    return changePassword(request.user.userId, oldPassword, newPassword);
+  });
+
+  
 }
