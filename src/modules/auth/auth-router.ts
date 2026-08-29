@@ -13,9 +13,9 @@ import { registerUser, verifyEmail, resendVerificationCode, validateLogin, chang
 export async function authRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
 
-  server.post('/auth/register', {
+  server.post('/v1/auth/register', {
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       body: registerBodySchema,
       response: { 201: registerResponseSchema },
     },
@@ -25,9 +25,9 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.status(201).send(user);
   });
 
-  server.post('/auth/login', {
+  server.post('/v1/auth/login', {
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       body: loginBodySchema,
       response: { 200: loginResponseSchema },
     },
@@ -38,9 +38,9 @@ export async function authRoutes(app: FastifyInstance) {
     return { token };
   });
 
-  server.post('/auth/verify-email', {
+  server.post('/v1/auth/verify-email', {
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       body: verifyEmailBodySchema,
       response: { 200: verifyEmailResponseSchema },
     },
@@ -49,9 +49,9 @@ export async function authRoutes(app: FastifyInstance) {
     return verifyEmail(email, code);
   });
 
-  server.post('/auth/resend-verification', {
+  server.post('/v1/auth/resend-verification', {
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       body: resendVerificationBodySchema,
       response: { 200: resendVerificationResponseSchema },
     },
@@ -60,10 +60,10 @@ export async function authRoutes(app: FastifyInstance) {
     return resendVerificationCode(email);
   });
 
-  server.post('/auth/change-password', {
+  server.post('/v1/auth/change-password', {
     onRequest: [app.authenticate],
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       security: [{ bearerAuth: [] }],
       body: changePasswordBodySchema,
       response: { 200: changePasswordResponseSchema },
@@ -73,10 +73,10 @@ export async function authRoutes(app: FastifyInstance) {
     return changePassword(request.user.userId, oldPassword, newPassword);
   });
 
-  server.post('/auth/disable-account', {
+  server.post('/v1/auth/disable-account', {
     onRequest: [app.authenticate],
     schema: {
-      tags: ['auth'],
+      tags: ['authentication'],
       security: [{ bearerAuth: [] }],
       response: { 200: disableAccountResponseSchema },
     },
