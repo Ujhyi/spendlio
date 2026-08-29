@@ -34,6 +34,24 @@ export const disableAccountResponseSchema = z.object({
   message: z.string(),
 });
 
+export const verifyEmailBodySchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+});
+
+export const verifyEmailResponseSchema = z.object({
+  verified: z.literal(true),
+});
+
+export const resendVerificationBodySchema = z.object({
+  email: z.string().email(),
+});
+
+export const resendVerificationResponseSchema = z.object({
+  sent: z.literal(true),
+});
+
+
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
 export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
