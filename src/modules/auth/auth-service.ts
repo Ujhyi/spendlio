@@ -5,6 +5,10 @@ import { hashPassword, verifyPassword } from '../../services/password';
 import { badRequest, unauthorized, notFound } from '../../shared/http-error';
 import { success } from 'zod';
 
+const DAYS_UNTIL_DELETION = 10;
+
+
+// feature/registration
 export async function registerUser (email: string, password: string) {
     const alreadyExists = await db.select().from(users).where(eq(users.email, email));
     if (alreadyExists.length > 0) {
@@ -17,6 +21,7 @@ export async function registerUser (email: string, password: string) {
     return { id: created.id, email: created.email };
 }
 
+// feature/login
 export async function validateLogin (email: string, password: string) {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     const doesNotExists = await db.select().from(users).where(eq(users.email, email))
@@ -31,6 +36,7 @@ export async function validateLogin (email: string, password: string) {
     return user;
 }
 
+// feature/changePassword 
 export async function changePassword (userId: string, oldPassword: string, newPassword: string) {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
       if (!user) { throw notFound('Používateľ nebol nájdený.'); }
@@ -42,4 +48,19 @@ export async function changePassword (userId: string, oldPassword: string, newPa
     await db.update(users).set({passwordHash: newPasswordHash}).where(eq(users.id, userId))
 
     return { success: true };
+}
+
+// feature/disable account
+export async function disableAccount(userId: string) {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (user) { throw notFound ("User not found.")}
+
+    await db.update(users)
+        .set({ disabled: 1, disabledAt: new Date() })
+        .where(eq(users.id, userId));
+    
+    return {
+        disabled: true as const,
+        message: "Your account has been deactivated. If you do not log in within ${DAYS_UNTIL_DELETION} days, it will be permanently deleted."
+    }
 }

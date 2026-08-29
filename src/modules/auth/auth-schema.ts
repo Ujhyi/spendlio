@@ -28,6 +28,10 @@ export const changePasswordResponseSchema = z.object({
   success: z.boolean(),
 });
 
+export const disableAccountResponseSchema = z.object({
+  disabled: z.literal(true),
+  message: z.string(),
+});
 
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
