@@ -2,11 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
   registerBodySchema, registerResponseSchema,
-  loginBodySchema, loginResponseSchema, 
+  verifyEmailBodySchema, verifyEmailResponseSchema,
+  resendVerificationBodySchema, resendVerificationResponseSchema,
+  loginBodySchema, loginResponseSchema,
   changePasswordBodySchema, changePasswordResponseSchema,
-  disableAccountResponseSchema, 
+  disableAccountResponseSchema,
 } from './auth-schema';
-import { registerUser, validateLogin, changePassword, disableAccount } from './auth-service';
+import { registerUser, verifyEmail, resendVerificationCode, validateLogin, changePassword, disableAccount } from './auth-service';
 
 export async function authRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
@@ -36,6 +38,28 @@ export async function authRoutes(app: FastifyInstance) {
     return { token };
   });
 
+  server.post('/auth/verify-email', {
+    schema: {
+      tags: ['auth'],
+      body: verifyEmailBodySchema,
+      response: { 200: verifyEmailResponseSchema },
+    },
+  }, async (request) => {
+    const { email, code } = request.body;
+    return verifyEmail(email, code);
+  });
+
+  server.post('/auth/resend-verification', {
+    schema: {
+      tags: ['auth'],
+      body: resendVerificationBodySchema,
+      response: { 200: resendVerificationResponseSchema },
+    },
+  }, async (request) => {
+    const { email } = request.body;
+    return resendVerificationCode(email);
+  });
+
   server.post('/auth/change-password', {
     onRequest: [app.authenticate],
     schema: {
@@ -59,5 +83,5 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (request) => {
     return disableAccount(request.user.userId);
   });
-  
+
 }
