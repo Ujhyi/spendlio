@@ -7,7 +7,7 @@ import { badRequest } from '../../shared/http-error';
 export async function categorizeRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
 
-  server.post('/categorize', {
+  server.post('/v1/categorize', {
     onRequest: [app.authenticate],
     schema: {
       tags: ['categorize'], security: [{ bearerAuth: [] }],
@@ -15,7 +15,7 @@ export async function categorizeRoutes(app: FastifyInstance) {
     },
   }, async (request) => categorizeAndSave(request.user.clientId, request.body.text));
 
-  app.post('/categorize-receipt', {
+  app.post('/v1/categorize-receipt', {
     onRequest: [app.authenticate],
     schema: { tags: ['categorize'], security: [{ bearerAuth: [] }] },
   }, async (request, reply) => {

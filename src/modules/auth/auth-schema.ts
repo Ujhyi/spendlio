@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { refreshTokens } from '../../db/schema';
 
 export const registerBodySchema = z.object({
   email: z.string().email(),
@@ -18,6 +19,7 @@ export const loginBodySchema = z.object({
 
 export const loginResponseSchema = z.object({
   token: z.string(),
+  refreshToken: z.string(),
 });
 
 export const changePasswordBodySchema = z.object({
@@ -49,6 +51,23 @@ export const resendVerificationBodySchema = z.object({
 
 export const resendVerificationResponseSchema = z.object({
   sent: z.literal(true),
+});
+
+export const refreshBodySchema = z.object({
+  refreshToken: z.string(),
+});
+
+export const refreshResponseSchema = z.object({
+  token: z.string(),
+  refreshToken: z.string(),
+});
+
+export const logoutBodySchema = z.object({
+  refreshToken: z.string(),
+});
+
+export const logoutResponseSchema = z.object({
+  loggedOut: z.literal(true),
 });
 
 

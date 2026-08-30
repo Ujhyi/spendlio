@@ -9,6 +9,10 @@ import {
   disableAccountResponseSchema,
 } from './auth-schema';
 import { registerUser, verifyEmail, resendVerificationCode, validateLogin, changePassword, disableAccount } from './auth-service';
+import { refreshBodySchema, refreshResponseSchema, logoutBodySchema, logoutResponseSchema, } from './auth-schema';
+import { createRefreshToken, validateRefreshToken, rotateRefreshToken, revokeRefreshToken } from '../../services/refresh-token';
+import { unauthorizedResponseSchema } from '../../shared/error-schema';
+
 
 export async function authRoutes(app: FastifyInstance) {
   const server = app.withTypeProvider<ZodTypeProvider>();
@@ -34,8 +38,9 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (request) => {
     const { email, password } = request.body;
     const user = await validateLogin(email, password);
-    const token = app.jwt.sign({ userId: user.id, clientId: user.clientId, email: user.email }, { expiresIn: '7d' });
-    return { token };
+    const token = app.jwt.sign({ userId: user.id, clientId: user.clientId, email: user.email }, { expiresIn: '15m' });
+    const refreshToken = await createRefreshToken(user.clientId);
+    return { token, refreshToken };
   });
 
   server.post('/v1/auth/verify-email', {
@@ -82,6 +87,41 @@ export async function authRoutes(app: FastifyInstance) {
     },
   }, async (request) => {
     return disableAccount(request.user.userId);
+  });
+
+  server.post('/v1/auth/refresh-token', {
+    schema: {
+      tags: ['authentication'],
+      body: refreshBodySchema,
+      response: {
+        200: refreshResponseSchema,
+        401: unauthorizedResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { refreshToken } = request.body;
+    const user = await validateRefreshToken(refreshToken);
+
+    if (!user) {
+      return reply.status(401).send({ statusCode: 401, error: 'UNAUTHORIZED', message: 'Refresh token is invalid.' });
+    }
+
+    const newAccessToken = app.jwt.sign({ userId: user.id, clientId: user.clientId, email: user.email }, { expiresIn: '15m' });
+    const newRefreshToken = await rotateRefreshToken(refreshToken, user.clientId);
+
+    return { token: newAccessToken, refreshToken: newRefreshToken };
+  });
+
+  server.post('/v1/auth/logout', {
+    schema: {
+      tags: ['authentication'],
+      body: logoutBodySchema,
+      response: { 200: logoutResponseSchema },
+    },
+  }, async (request) => {
+    const { refreshToken } = request.body;
+    await revokeRefreshToken(refreshToken);
+    return { loggedOut: true as const };
   });
 
 }
