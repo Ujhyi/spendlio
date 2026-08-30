@@ -34,7 +34,7 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (request) => {
     const { email, password } = request.body;
     const user = await validateLogin(email, password);
-    const token = app.jwt.sign({ userId: user.id, email: user.email }, { expiresIn: '7d' });
+    const token = app.jwt.sign({ userId: user.id, clientId: user.clientId, email: user.email }, { expiresIn: '7d' });
     return { token };
   });
 

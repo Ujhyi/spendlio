@@ -5,36 +5,27 @@ import { categorizeAndSave, categorizeReceiptAndSave } from './categorize-servic
 import { badRequest } from '../../shared/http-error';
 
 export async function categorizeRoutes(app: FastifyInstance) {
-    const server = app.withTypeProvider<ZodTypeProvider>();
+  const server = app.withTypeProvider<ZodTypeProvider>();
 
-    server.post('/v1/categorize', {
-        onRequest: [app.authenticate],
-        schema: {
-            tags: ['categorize'],
-            security: [{ bearerAuth: [] }],
-            body: categorizeBodySchema,
-            response: { 200: categorizeResponseSchema },
-        },
-    }, async (request) => {
-        return categorizeAndSave(request.user.userId, request.body.text);
-    });
+  server.post('/categorize', {
+    onRequest: [app.authenticate],
+    schema: {
+      tags: ['categorize'], security: [{ bearerAuth: [] }],
+      body: categorizeBodySchema, response: { 200: categorizeResponseSchema },
+    },
+  }, async (request) => categorizeAndSave(request.user.clientId, request.body.text));
 
-    app.post('/v1/categorize-receipt', {
-        onRequest: [app.authenticate],
-        schema: {
-            tags: ['categorize'],
-            security: [{ bearerAuth: [] }],
-        },
-    }, async (request, reply) => {
-        const file = await (request as any).file();
-        if (!file) {
-            throw badRequest('Not found file.');
-        }
-
-        const buffer = await file.toBuffer();
-        const base64Image = buffer.toString('base64');
-
-        const result = await categorizeReceiptAndSave(request.user.userId, base64Image, file.mimetype);
-        return reply.status(201).send(result);
-    });
+  app.post('/categorize-receipt', {
+    onRequest: [app.authenticate],
+    schema: { tags: ['categorize'], security: [{ bearerAuth: [] }] },
+  }, async (request, reply) => {
+    const file = await (request as any).file();
+    if (!file) {
+      throw badRequest('Nebol nahraný žiadny súbor.');
+    }
+    const buffer = await file.toBuffer();
+    const base64Image = buffer.toString('base64');
+    const result = await categorizeReceiptAndSave(request.user.clientId, base64Image, file.mimetype);
+    return reply.status(201).send(result);
+  });
 }
