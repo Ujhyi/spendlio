@@ -32,3 +32,11 @@ export const verification_tokens = pgTable('verification_tokens', {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: serial('id').primaryKey(),
+  token: text('token').notNull().unique(),
+  clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
