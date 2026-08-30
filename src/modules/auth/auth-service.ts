@@ -6,6 +6,8 @@ import { badRequest, unauthorized, notFound } from '../../shared/http-error';
 import { generateUniqueClientId, generateUniqueVerificationCode, verificationExpiresAt } from '../../services/id-generator';
 import { success } from 'zod';
 import { sendVerificationEmail } from '../../services/email';
+import { verifyGoogleToken } from '../../services/google-oauth';
+
 
 const DAYS_UNTIL_DELETION = 10;
 
@@ -75,26 +77,22 @@ export async function resendVerificationCode(email: string) {
 // feature/login
 export async function validateLogin(email: string, password: string) {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    const doesNotExists = await db.select().from(users).where(eq(users.email, email))
-
-    if (doesNotExists.length == 0) { throw badRequest("Users with this email does not exist.") }
-    if (user.emailVerified === 0) { throw unauthorized("Your account has not been verified yet. Please verify first.") }
-    if (!user || !(await verifyPassword(password, user.passwordHash))) { throw unauthorized("Incorect credentials.") }
-    
+    if (!user || !user.passwordHash) { throw unauthorized('Incorrect credentials.'); }
+    const isValid = await verifyPassword(password, user.passwordHash);
+    if (!isValid) { throw unauthorized('Incorrect credentials.'); }
+    if (user.disabled === 1) { throw unauthorized('Account is in disabled state.'); }
+    if (user.emailVerified === 0) { throw unauthorized('Email is not verified, check your email address.'); }
     return user;
 }
 
 // feature/changePassword 
 export async function changePassword(userId: number, oldPassword: string, newPassword: string) {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
-    if (!user) { throw notFound('Používateľ nebol nájdený.'); }
-
+    if (!user || !user.passwordHash) { throw notFound('User not found or login by Google OAUTH.'); }
     const isOldPasswordValid = await verifyPassword(oldPassword, user.passwordHash);
-    if (!isOldPasswordValid) { throw unauthorized("Incorrect password. "); }
-
+    if (!isOldPasswordValid) { throw unauthorized('Staré heslo nie je správne.'); }
     const newPasswordHash = await hashPassword(newPassword);
-    await db.update(users).set({ passwordHash: newPasswordHash }).where(eq(users.id, userId))
-
+    await db.update(users).set({ passwordHash: newPasswordHash }).where(eq(users.id, userId));
     return { success: true };
 }
 
@@ -111,4 +109,49 @@ export async function disableAccount(userId: number) {
         disabled: true as const,
         message: "Your account has been deactivated. If you do not log in within ${DAYS_UNTIL_DELETION} days, it will be permanently deleted."
     }
+}
+
+export async function loginWithGoogle(credential: string): Promise<typeof users.$inferSelect> {
+    const googlePayload = await verifyGoogleToken(credential);
+
+    if (!googlePayload.emailVerified) {
+        throw unauthorized('Google účet nemá overený email.');
+    }
+
+    const [existing] = await db.select().from(users).where(eq(users.email, googlePayload.email));
+
+    if (existing) {
+        if (existing.disabled === 1) {
+            throw unauthorized('Tento účet je deaktivovaný.');
+        }
+
+        if (!existing.googleId) {
+            const [updated] = await db.update(users)
+                .set({ googleId: googlePayload.googleId, emailVerified: 1 })
+                .where(eq(users.id, existing.id))
+                .returning();
+
+            if (!updated) {
+                throw notFound('Nepodarilo sa aktualizovať používateľa.');
+            }
+            return updated;
+        }
+
+        return existing;
+    }
+
+    const clientId = await generateUniqueClientId();
+    const [created] = await db.insert(users).values({
+        email: googlePayload.email,
+        passwordHash: null,
+        googleId: googlePayload.googleId,
+        emailVerified: 1,
+        clientId,
+    }).returning();
+
+    if (!created) {
+        throw notFound('Nepodarilo sa vytvoriť používateľa.');
+    }
+
+    return created;
 }

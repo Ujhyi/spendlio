@@ -70,6 +70,9 @@ export const logoutResponseSchema = z.object({
   loggedOut: z.literal(true),
 });
 
+export const googleLoginBodySchema = z.object({
+  credential: z.string(),
+});
 
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
