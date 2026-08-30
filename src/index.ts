@@ -11,6 +11,7 @@ import { authRoutes } from './modules/auth/auth-router';
 import type { FastifyError } from 'fastify';
 import { transactionRoutes } from './modules/transaction/transaction-router';
 import { categorizeRoutes } from './modules/categorize/categorize-router';
+import multipart from '@fastify/multipart';
 
 const app = Fastify({ logger: true });
 
@@ -18,7 +19,10 @@ app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 async function main() {
-  await app.register(cors);
+  await app.register(cors, {
+    origin: true, // alebo konkrétne 'http://localhost:3000' pre produkciu
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
 
   await app.register(swagger, {
     openapi: {
@@ -32,6 +36,11 @@ async function main() {
     transform: jsonSchemaTransform,
   });
   await app.register(swaggerUi, { routePrefix: '/docs' });
+
+
+  await app.register(multipart, {
+    limits: { fileSize: 8 * 1024 * 1024 },
+  });
 
   await app.register(authPlugin);
   await app.register(globalErrorResponse);
