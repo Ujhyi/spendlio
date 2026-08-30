@@ -10,3 +10,6 @@ dist/
 # Drizzle migration
 drizzle/
 
+# Deploy - package
+deploy-package/
+deploy-package*
