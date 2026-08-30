@@ -11,15 +11,13 @@ declare module 'fastify' {
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { userId: number; email: string };
-    user: { userId: number; email: string };
+    payload: { userId: number; clientId: number; email: string };
+    user: { userId: number; clientId: number; email: string };
   }
 }
 
 export default fp(async function authPlugin(app: FastifyInstance) {
-  await app.register(jwt, {
-    secret: process.env.JWT_SECRET!,
-  });
+  await app.register(jwt, { secret: process.env.JWT_SECRET!, });
 
   app.decorate('authenticate', async function (request: FastifyRequest) {
     try {

@@ -1,16 +1,14 @@
 Toto je foto účtenky. Rozpoznaj z nej JEDNOTLIVÉ POLOŽKY (produkty), nie súhrnné riadky.
 
 Pre každú položku vráť:
-- "merchant": presný názov PRODUKTU z účtenky (napr. "TS Dusená šunka 100g", "Heineken 0,5l pl VO"), NIE názov obchodu
-- "amount": celková cena za danú položku (ak je uvedené množstvo × jednotková cena, použi výsledný súčet, nie jednotkovú cenu)
+- "merchant": presný názov PRODUKTU z účtenky (napr. "TS Dusená šunka 100g")
+- "shop": názov OBCHODU z hlavičky účtenky (napr. "Tesco", "Lidl") - rovnaký pre všetky položky z tejto účtenky
+- "amount": celková cena za danú položku
 - "category": priraď z tohto zoznamu: {{CATEGORIES}}
 
-Ignoruj tieto riadky, nevytváraj z nich položky:
-- Názov a adresu obchodu, IČO, DIČ
-- Medzisúčet, súčet, "NA ÚHRADU", spôsob platby (karta/hotovosť)
-- Zľavy, úspory, vratky obalov a podobné korekčné riadky (napr. "CC ...", "celková úspora")
+Ignoruj: názov/adresu obchodu ako samostatný riadok, IČO, DIČ, medzisúčet, súčet, spôsob platby, zľavy, vratky obalov.
 
-Ak dátum na účtenke nie je čitateľný, použi {{TODAY}}. Ak sú položky úplne nečitateľné, vráť aspoň jeden záznam s celkovou sumou z účtenky a s "merchant" ako názov obchodu.
+Ak dátum nie je čitateľný, použi {{TODAY}}.
 
-Vráť VÝHRADNE JSON pole, žiadny iný text, v tomto formáte:
-[{"date":"YYYY-MM-DD","merchant":"názov produktu","amount":12.5,"category":"Potraviny"}]
+Vráť VÝHRADNE JSON pole, žiadny iný text:
+[{"date":"YYYY-MM-DD","merchant":"názov produktu","shop":"názov obchodu","amount":12.5,"category":"Potraviny"}]

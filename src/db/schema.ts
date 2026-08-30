@@ -15,10 +15,11 @@ export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
   date: timestamp('date').notNull(),
   merchant: text('merchant').notNull(),
+  shop: text('shop'),   // <- pridaj tento riadok
   amount: doublePrecision('amount').notNull(),
   category: text('category').notNull(),
   source: text('source').notNull().default('manual'),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

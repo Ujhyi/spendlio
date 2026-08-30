@@ -5,6 +5,7 @@ import { categoryEnum } from '../modules/transaction/transaction-schema';
 interface ParsedTransaction {
   date: string;
   merchant: string;
+  shop?: string;
   amount: number;
   category: string;
 }
@@ -63,19 +64,7 @@ export async function categorizeReceiptImage(base64Image: string, mimeType: stri
       }),
     }
   );
-
   const data = await response.json();
-
-  // DOČASNÉ DEBUG LOGOVANIE - uvidíš presne, čo Gemini vrátilo
-  console.log('=== GEMINI RAW RESPONSE ===');
-  console.log(JSON.stringify(data, null, 2));
-  console.log('=== END GEMINI RAW RESPONSE ===');
-
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-  console.log('=== EXTRACTED TEXT ===');
-  console.log(text);
-  console.log('=== END EXTRACTED TEXT ===');
-
   return parseJsonArray(text);
 }
