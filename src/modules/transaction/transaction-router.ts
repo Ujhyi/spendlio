@@ -35,7 +35,7 @@ export async function transactionRoutes(app: FastifyInstance) {
     return reply.status(201).send(created);
   });
 
-  server.patch('/transactions/:id', {
+  server.patch('/v1/transactions/:id', {
     onRequest: [app.authenticate],
     schema: {
       tags: ['transactions'], security: [{ bearerAuth: [] }],

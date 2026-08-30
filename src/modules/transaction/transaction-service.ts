@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../services/db';
 import { transactions } from '../../db/schema';
-import { notFound } from '../../shared/http-error';
+import { notFound, badRequest } from '../../shared/http-error';
 import type { CreateTransactionBody, UpdateTransactionBody } from '../transaction/transaction-schema';
 
 function serializeTransaction(t: typeof transactions.$inferSelect) {
@@ -42,9 +42,14 @@ export async function updateTransaction(clientId: number, id: number, data: Upda
     throw notFound('Transakcia nebola nájdená.');
   }
 
+  const parsedDate = data.date && data.date.trim() !== '' ? new Date(data.date) : undefined;
+  if (parsedDate && isNaN(parsedDate.getTime())) {
+    throw badRequest('Neplatný formát dátumu.');
+  }
+
   const [updated] = await db.update(transactions)
     .set({
-      ...(data.date !== undefined ? { date: new Date(data.date) } : {}),
+      ...(parsedDate ? { date: parsedDate } : {}),
       ...(data.merchant !== undefined ? { merchant: data.merchant } : {}),
       ...(data.shop !== undefined ? { shop: data.shop } : {}),
       ...(data.amount !== undefined ? { amount: data.amount } : {}),
