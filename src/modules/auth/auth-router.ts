@@ -12,6 +12,8 @@ import { registerUser, verifyEmail, resendVerificationCode, validateLogin, chang
 import { refreshBodySchema, refreshResponseSchema, logoutBodySchema, logoutResponseSchema, } from './auth-schema';
 import { createRefreshToken, validateRefreshToken, rotateRefreshToken, revokeRefreshToken } from '../../services/refresh-token';
 import { unauthorizedResponseSchema } from '../../shared/error-schema';
+import { googleLoginBodySchema } from './auth-schema';
+import { loginWithGoogle } from './auth-service';
 
 
 export async function authRoutes(app: FastifyInstance) {
@@ -123,5 +125,23 @@ export async function authRoutes(app: FastifyInstance) {
     await revokeRefreshToken(refreshToken);
     return { loggedOut: true as const };
   });
+
+
+  server.post('/v1/auth/google', {
+    schema: {
+      tags: ['authentication'],
+      body: googleLoginBodySchema,
+      response: { 200: loginResponseSchema },
+    },
+  }, async (request) => {
+    const { credential } = request.body;
+    const user = await loginWithGoogle(credential);
+
+    const token = app.jwt.sign({ userId: user.id, clientId: user.clientId, email: user.email }, { expiresIn: '15m' });
+    const refreshToken = await createRefreshToken(user.clientId);
+
+    return { token, refreshToken };
+  });
+
 
 }

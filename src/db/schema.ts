@@ -4,8 +4,9 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   clientId: integer('client_id').notNull().unique(),
   email: text('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
-  emailVerified: integer('email_verified').notNull().default(0), // 0 = neoverený, 1 = overený
+  passwordHash: text('password_hash'),
+  emailVerified: integer('email_verified').notNull().default(0), 
+  googleId: text('google_id').unique(),    
   disabled: integer('disabled').notNull().default(0),
   disabledAt: timestamp('disabled_at'),
   createdAt: timestamp('created_at').defaultNow(),
