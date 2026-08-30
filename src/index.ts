@@ -9,6 +9,9 @@ import globalErrorResponse from './plugins/global-error-response';
 import { HttpError } from './shared/http-error';
 import { authRoutes } from './modules/auth/auth-router';
 import type { FastifyError } from 'fastify';
+import { transactionRoutes } from './modules/transaction/transaction-router';
+import { categorizeRoutes } from './modules/categorize/categorize-router';
+import multipart from '@fastify/multipart';
 
 const app = Fastify({ logger: true });
 
@@ -16,7 +19,10 @@ app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 async function main() {
-  await app.register(cors);
+  await app.register(cors, {
+    origin: true, // alebo konkrétne 'http://localhost:3000' pre produkciu
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
 
   await app.register(swagger, {
     openapi: {
@@ -31,17 +37,22 @@ async function main() {
   });
   await app.register(swaggerUi, { routePrefix: '/docs' });
 
+
+  await app.register(multipart, {
+    limits: { fileSize: 8 * 1024 * 1024 },
+  });
+
   await app.register(authPlugin);
   await app.register(globalErrorResponse);
 
-    app.setErrorHandler((error: FastifyError, request, reply) => {
+  app.setErrorHandler((error: FastifyError, request, reply) => {
     if (error instanceof HttpError) {
         return reply.status(error.statusCode).send({
         statusCode: error.statusCode,
         error: error.errorLabel,
         message: error.message,
         });
-    }
+  }
 
     if (error.validation) {
         return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: error.message });
@@ -60,6 +71,8 @@ async function main() {
   app.get('/health', async () => ({ status: 'ok' }));
 
   await app.register(authRoutes);
+  await app.register(transactionRoutes);
+  await app.register(categorizeRoutes);
 
 
   const port = Number(process.env.PORT) || 3000;
