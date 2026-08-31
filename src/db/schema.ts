@@ -25,6 +25,16 @@ export const transactions = pgTable('transactions', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const budgets = pgTable('budgets', {
+  id: serial('id').primaryKey(),
+  clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
+  category: text('category').notNull(),
+  period: text('period').notNull().default('month'), // 'week' | 'month'
+  limitAmount: doublePrecision('limit_amount').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 export const verification_tokens = pgTable('verification_tokens', {
   id: serial('id').primaryKey(),
   clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
