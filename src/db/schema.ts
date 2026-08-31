@@ -16,8 +16,9 @@ export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
   date: timestamp('date').notNull(),
   merchant: text('merchant').notNull(),
-  shop: text('shop'),   // <- pridaj tento riadok
+  shop: text('shop'),
   amount: doublePrecision('amount').notNull(),
+  currency: text('currency').notNull().default('EUR'),
   category: text('category').notNull(),
   source: text('source').notNull().default('manual'),
   clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
@@ -40,4 +41,12 @@ export const refreshTokens = pgTable('refresh_tokens', {
   clientId: integer('client_id').notNull().references(() => users.clientId, { onDelete: 'cascade' }),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const accountSettings = pgTable('account_settings', {
+  id: serial('id').primaryKey(),
+  clientId: integer('client_id').notNull().unique().references(() => users.clientId, { onDelete: 'cascade' }),
+  baseCurrency: text('base_currency').notNull().default('EUR'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
