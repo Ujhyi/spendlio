@@ -1,7 +1,10 @@
 import { db } from '../../services/db';
 import { transactions } from '../../db/schema';
-import { categorizeText, categorizeReceiptImage } from '../../services/gemini';
 import { internalError, badRequest } from '../../shared/http-error';
+
+//import { categorizeText, categorizeReceiptImage } from '../../services/gemini';
+import { categorizeText, categorizeReceiptImage } from '../../services/ollama';
+
 
 function serializeTransaction(t: typeof transactions.$inferSelect) {
   return {
@@ -14,13 +17,14 @@ export async function categorizeAndSave(clientId: number, text: string) {
   let parsed;
   try {
     parsed = await categorizeText(text);
-  } catch {
+  } catch (err) {
+    console.error('DEBUG categorizeText error:', err);
     throw internalError('Kategorizácia zlyhala, skús to znova.');
   }
 
   const inserted = await db.insert(transactions).values(
     parsed.map((p) => ({
-      date: new Date(p.date), merchant: p.merchant, shop: null,
+      date: new Date(p.date), merchant: p.merchant, shop: p.shop ?? null,
       amount: p.amount, category: p.category, source: 'ai_text' as const, clientId,
     }))
   ).returning();
