@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../services/db';
-import { users, verification_tokens } from '../../db/schema';
+import { users, verification_tokens, accountSettings } from '../../db/schema';
 import { hashPassword, verifyPassword } from '../../services/password';
 import { badRequest, unauthorized, notFound } from '../../shared/http-error';
 import { generateUniqueClientId, generateUniqueVerificationCode, verificationExpiresAt } from '../../services/id-generator';
@@ -22,6 +22,7 @@ export async function registerUser(email: string, password: string) {
     const clientId = await generateUniqueClientId();
     const passwordHash = await hashPassword(password);
     const [created] = await db.insert(users).values({ email, passwordHash, clientId }).returning();
+    await db.insert(accountSettings).values({ clientId: created.clientId });
     const code = await createVerificationCode(created.clientId);
     await sendVerificationEmail(email, code);
 

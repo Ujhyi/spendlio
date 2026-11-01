@@ -11,6 +11,10 @@ import { authRoutes } from './modules/auth/auth-router';
 import type { FastifyError } from 'fastify';
 import { transactionRoutes } from './modules/transaction/transaction-router';
 import { categorizeRoutes } from './modules/categorize/categorize-router';
+import { settingsRoutes } from './modules/settings/settings-router';
+import { budgetRoutes } from './modules/budget/budget-router';
+
+
 import multipart from '@fastify/multipart';
 
 const app = Fastify({ logger: true });
@@ -73,6 +77,8 @@ async function main() {
   await app.register(authRoutes);
   await app.register(transactionRoutes);
   await app.register(categorizeRoutes);
+  await app.register(settingsRoutes);
+  await app.register(budgetRoutes);
 
 
   const port = Number(process.env.PORT) || 3000;

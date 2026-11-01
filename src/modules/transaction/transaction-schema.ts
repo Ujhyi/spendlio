@@ -5,18 +5,23 @@ export const categoryEnum = z.enum([
   'Zábava', 'Zdravie', 'Nákupy', 'Účty', 'Iné',
 ]);
 
+export const currencyEnum = z.enum(['EUR', 'CZK', 'USD', 'GBP', 'PLN']);
+
 export const transactionSchema = z.object({
   id: z.number(),
   date: z.coerce.string(),
   merchant: z.string(),
   shop: z.string().nullable(),
   amount: z.number(),
+  currency: z.string(),
+  amountInBaseCurrency: z.number(),
+  baseCurrency: z.string(),
   category: z.string(),
   source: z.string(),
 });
 
 export const createTransactionBodySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Dátum musí byť vo formáte YYYY-MM-DD'),
+  date: z.string(),
   merchant: z.string(),
   shop: z.string().optional(),
   amount: z.number().positive(),
@@ -28,8 +33,9 @@ export const updateTransactionBodySchema = z.object({
   merchant: z.string().optional(),
   shop: z.string().optional(),
   amount: z.number().positive().optional(),
+  currency: currencyEnum.optional(),
   category: categoryEnum.optional(),
-})
+});
 
 export const transactionParamsSchema = z.object({
   id: z.coerce.number(),

@@ -1,37 +1,48 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../services/db';
 import { transactions } from '../../db/schema';
-import { notFound, badRequest } from '../../shared/http-error';
-import type { CreateTransactionBody, UpdateTransactionBody } from '../transaction/transaction-schema';
+import { notFound } from '../../shared/http-error';
+import { convertAmount, type Currency } from '../../services/exchange-rate';
+import { getUserBaseCurrency } from '../settings/settings-service';
+import type { CreateTransactionBody, UpdateTransactionBody } from './transaction-schema';
 
-function serializeTransaction(t: typeof transactions.$inferSelect) {
+async function toResponse(t: typeof transactions.$inferSelect, baseCurrency: string) {
+  const amountInBaseCurrency = await convertAmount(t.amount, t.currency as Currency, baseCurrency as Currency);
   return {
     id: t.id,
     date: t.date.toISOString(),
     merchant: t.merchant,
     shop: t.shop,
     amount: t.amount,
+    currency: t.currency,
+    amountInBaseCurrency,
+    baseCurrency,
     category: t.category,
     source: t.source,
   };
 }
 
 export async function listTransactions(clientId: number) {
+  const baseCurrency = await getUserBaseCurrency(clientId);
   const rows = await db.select().from(transactions).where(eq(transactions.clientId, clientId));
-  return rows.map(serializeTransaction);
+  return Promise.all(rows.map((r) => toResponse(r, baseCurrency)));
 }
 
 export async function createTransaction(clientId: number, data: CreateTransactionBody) {
+  const baseCurrency = await getUserBaseCurrency(clientId);
+
   const [created] = await db.insert(transactions).values({
     date: new Date(data.date),
     merchant: data.merchant,
     shop: data.shop ?? null,
     amount: data.amount,
+    currency: baseCurrency, // <- nová transakcia je vždy v aktuálnej mene používateľa
     category: data.category,
     source: 'manual',
     clientId,
   }).returning();
-  return serializeTransaction(created);
+
+  return toResponse(created, baseCurrency);
 }
 
 export async function updateTransaction(clientId: number, id: number, data: UpdateTransactionBody) {
@@ -42,23 +53,20 @@ export async function updateTransaction(clientId: number, id: number, data: Upda
     throw notFound('Transakcia nebola nájdená.');
   }
 
-  const parsedDate = data.date && data.date.trim() !== '' ? new Date(data.date) : undefined;
-  if (parsedDate && isNaN(parsedDate.getTime())) {
-    throw badRequest('Neplatný formát dátumu.');
-  }
-
   const [updated] = await db.update(transactions)
     .set({
-      ...(parsedDate ? { date: parsedDate } : {}),
+      ...(data.date !== undefined ? { date: new Date(data.date) } : {}),
       ...(data.merchant !== undefined ? { merchant: data.merchant } : {}),
       ...(data.shop !== undefined ? { shop: data.shop } : {}),
       ...(data.amount !== undefined ? { amount: data.amount } : {}),
+      ...(data.currency !== undefined ? { currency: data.currency } : {}),
       ...(data.category !== undefined ? { category: data.category } : {}),
     })
     .where(eq(transactions.id, id))
     .returning();
 
-  return serializeTransaction(updated);
+  const baseCurrency = await getUserBaseCurrency(clientId);
+  return toResponse(updated, baseCurrency);
 }
 
 export async function deleteTransaction(clientId: number, id: number) {
@@ -66,7 +74,7 @@ export async function deleteTransaction(clientId: number, id: number) {
     .where(and(eq(transactions.id, id), eq(transactions.clientId, clientId)));
 
   if (!existing) {
-    throw notFound('Transaction not found.');
+    throw notFound('Transakcia nebola nájdená.');
   }
 
   await db.delete(transactions).where(eq(transactions.id, id));
